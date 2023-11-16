@@ -52,7 +52,7 @@ class RDTSender:
         :param reply: a python dictionary represent a reply sent by the receiver
         :return: True -> if the reply is corrupted | False -> if the reply is NOT corrupted """
         # TODO provide your own implementation
-        return True
+        return reply['checksum']!=ord(reply['ack'])
 
 
     @staticmethod
@@ -85,11 +85,21 @@ class RDTSender:
         :return: terminate without returning any value
         """
         # for every character in the buffer
+        # print(process_buffer)
         for data in process_buffer:
-            checksum = RDTSender.get_checksum(data)
-            pkt = RDTSender.make_pkt(self.sequence, data, checksum)
-            reply = self.net_srv.udt_send(pkt)
-            print(f'The SENDER SENT {pkt}')
-            print(f'THE RECIEVER REPLIED WITH {reply}')
+            sendAgain=True
+            while sendAgain:
+                checksum = RDTSender.get_checksum(data)
+                pkt = RDTSender.make_pkt(self.sequence, data, checksum)
+                print(f'The SENDER SENT {pkt}')
+                reply = self.net_srv.udt_send(pkt)
+                print(f'THE RECIEVER REPLIED WITH {reply}')
+                if not RDTSender.is_corrupted(reply) and RDTSender.is_expected_seq(reply,self.sequence):
+                    sendAgain=False
+                    self.sequence = '0' if self.sequence=='1' else '1'
+                else:
+                    print(f'Found an error in the reply')
+                    print(f'SENDING THIS PACKET AGAIN: {pkt} ')
+                print('===========================================')
         print(f'Sender Done!')
         return

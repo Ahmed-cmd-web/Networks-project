@@ -24,7 +24,7 @@ class RDTReceiver:
         :param packet: a python dictionary represent a packet received from the sender :return: True -> if the reply is corrupted | False -> if the reply is NOT
         corrupted """
         # TODO provide your own implementation
-        return True
+        return packet['checksum']!=ord(packet['data'])
 
     @staticmethod
     def is_expected_seq(rcv_pkt , exp_seq):
@@ -50,12 +50,14 @@ class RDTReceiver:
         """
         # TODO provide your own implementation
         # deliver the data to the process in the application layer
-        ReceiverProcess.deliver_data(rcv_pkt['data'])
 
         reply_pkt=None
+
         if self.is_corrupted(rcv_pkt) or not self.is_expected_seq(rcv_pkt,self.sequence):
-            reply_pkt = RDTReceiver.make_reply_pkt('0' if self.sequence=='1' else '1',rcv_pkt['checksum']) #return reply_pkt
+            reply_pkt = RDTReceiver.make_reply_pkt('0' if self.sequence=='1' else '1',ord(rcv_pkt['sequence_number'])) #return reply_pkt
         else:
-            reply_pkt = RDTReceiver.make_reply_pkt(self.sequence,rcv_pkt['checksum']) #return reply_pkt
+            reply_pkt = RDTReceiver.make_reply_pkt(self.sequence,ord(rcv_pkt['sequence_number'])) #return reply_pkt
+            ReceiverProcess.deliver_data(rcv_pkt['data'])
+            self.sequence = '0' if self.sequence=='1' else '1'
 
         return reply_pkt
