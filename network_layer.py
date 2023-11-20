@@ -6,7 +6,7 @@ NOTE: YOU SHOULD NOT MODIFY THIS CLASS
 """
 class NetworkLayer:
     """ The network layer that deliver packets and acknowledgments between sender and receiver """
-    def __init__(self, reliability=1.0, delay=1.0, pkt_corrupt=True, ack_corrupt=True):
+    def __init__(self, reliability=1.0, delay=1.0,timer=0, pkt_corrupt=True, ack_corrupt=True):
         """ initialize the network layer
         :param reliability: the probability that the network layer will deliver the message
         correctly
@@ -20,6 +20,7 @@ class NetworkLayer:
         self.delay = delay
         self.pkt_corrupt = pkt_corrupt
         self.ack_corrupt = ack_corrupt
+        self.timer=timer
         self.recv = RDTReceiver() # connect the network layer to the receiver
     def get_network_reliability(self):
         """ show network layer reliability
@@ -32,6 +33,12 @@ class NetworkLayer:
         ran = random.uniform(0, 1)
         if ran > self.reliability: return True
         return False
+
+    def __packet_loss_probability(self)->bool:
+        '''calculate the probability that a pocket will be corrupted :return: True if the probability greater than the network reliability
+        '''
+        return random.uniform(0, 1) > self.reliability
+
     def __corrupt_packet(self):
         """ Corrupt the sender packet, it could corrupt the seq_num, the data or the
         checksum
@@ -53,12 +60,19 @@ class NetworkLayer:
             self.reply['ack'] = chr(random.randint(2, 9))
         else:
             self.reply['checksum'] = chr(random.randint(ord('2'), ord('9')))
-    def udt_send(self, frame):
+    def udt_send(self, frame,reply:list):
         """ implement the delivery service of the unreliable network layer
         :param frame: a python dictionary represent the a sender's packet or a receiver's reply
         :return: the receiver's reply as a python dictionary returned to the sender """
         # TODO: You may add ONLY print statements to this function for debugging purpose
         self.packet = frame
+        will_lose=self.__packet_loss_probability()
+
+        # This condition decides whether packet loss is gonna occur.
+        if will_lose and self.timer:
+            time.sleep(random.uniform(self.timer*0.25,self.timer*2))
+
+
         s_test = self.__packet_corruption_probability()
         if s_test and self.pkt_corrupt:
             self.__corrupt_packet()
@@ -67,4 +81,5 @@ class NetworkLayer:
         self.reply = self.recv.rdt_rcv(self.packet)
         r_test = self.__packet_corruption_probability()
         if r_test and self.ack_corrupt: self.__corrupt_reply()
+        reply.append(self.reply)
         return self.reply

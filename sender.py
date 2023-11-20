@@ -1,3 +1,6 @@
+from threading import Thread,Timer
+
+
 class SenderProcess:
     """ Represent the sender process in the application layer """
     __buffer = list()
@@ -18,7 +21,7 @@ class SenderProcess:
 
 class RDTSender:
     """ Implement the Reliable Data Transfer Protocol V2.2 Sender Side """
-    def __init__(self, net_srv):
+    def __init__(self, net_srv,timer):
         """ This is a class constructor
         It initialize the RDT sender sequence number to ’0’ and the network layer
         services
@@ -26,6 +29,7 @@ class RDTSender:
         """
         self.sequence = '0'
         self.net_srv = net_srv
+        self.timer=timer
     @staticmethod
     def get_checksum(data):
         """ Calculate the checksum for outgoing data
@@ -85,21 +89,29 @@ class RDTSender:
         :return: terminate without returning any value
         """
         # for every character in the buffer
-        # print(process_buffer)
         for data in process_buffer:
             sendAgain=True
             while sendAgain:
                 checksum = RDTSender.get_checksum(data)
                 pkt = RDTSender.make_pkt(self.sequence, data, checksum)
                 print(f'The SENDER SENT {pkt}')
-                reply = self.net_srv.udt_send(pkt)
-                print(f'THE RECIEVER REPLIED WITH {reply}')
-                if not RDTSender.is_corrupted(reply) and RDTSender.is_expected_seq(reply,self.sequence):
-                    sendAgain=False
-                    self.sequence = '0' if self.sequence=='1' else '1'
+                reply=[]
+                reply_thread = Thread(target=self.net_srv.udt_send,args=[pkt,reply])
+                reply_thread.start()
+                print(f'Started Timer for {self.timer} seconds...')
+                reply_thread.join(self.timer)
+                reply_thread.is_alive()
+
+                if not len(reply) :
+                    print('TIMEOUT,SENDING AGAIN')
                 else:
-                    print(f'Found an error in the reply')
-                    print(f'SENDING THIS PACKET AGAIN: {pkt} ')
+                    print(f'THE RECIEVER REPLIED WITH {reply}')
+                    if not RDTSender.is_corrupted(*reply) and RDTSender.is_expected_seq(*reply,self.sequence):
+                        sendAgain=False
+                        self.sequence = '0' if self.sequence=='1' else '1'
+                    else:
+                        print(f'Found an error in the reply')
+                        print(f'SENDING AGAIN')
                 print('===========================================')
         print(f'Sender Done!')
         return

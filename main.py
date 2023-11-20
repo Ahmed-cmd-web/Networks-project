@@ -19,8 +19,9 @@ if __name__ == '__main__':
         corrupt_ack = bool(int(args['ack']))
         SenderProcess.set_outgoing_data(msg)
         print(f'Sender is sending:{SenderProcess.get_outgoing_data()}')
+    timer=int(args['timer'])
     network_serv = NetworkLayer(reliability=prob_to_deliver, delay=delay, pkt_corrupt= corrupt_pkt ,
-    ack_corrupt=corrupt_ack)
-    rdt_sender = RDTSender(network_serv)
+    ack_corrupt=corrupt_ack,timer=timer)
+    rdt_sender = RDTSender(network_serv,timer)
     rdt_sender.rdt_send(SenderProcess.get_outgoing_data())
     print(f'Receiver received: {ReceiverProcess.get_buffer()}')
