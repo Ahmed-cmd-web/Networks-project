@@ -100,7 +100,7 @@ class RDTSender:
                 reply_thread.start()
                 print(f'Started Timer for {self.timer} seconds...')
                 reply_thread.join(self.timer)
-                reply_thread.is_alive()
+                
 
                 if not len(reply) :
                     print('TIMEOUT,SENDING AGAIN')
