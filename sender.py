@@ -99,7 +99,7 @@ class RDTSender:
                     self.sequence = '0' if self.sequence=='1' else '1'
                 else:
                     print(f'Found an error in the reply')
-                    print(f'SENDING THIS PACKET AGAIN: {pkt} ')
+                    print(f'SENDING PACKET AGAIN ')
                 print('===========================================')
         print(f'Sender Done!')
         return

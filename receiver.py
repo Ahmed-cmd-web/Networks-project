@@ -50,14 +50,9 @@ class RDTReceiver:
         """
         # TODO provide your own implementation
         # deliver the data to the process in the application layer
-
-        reply_pkt=None
-
+        flipped='0' if self.sequence=='1' else '1'
         if self.is_corrupted(rcv_pkt) or not self.is_expected_seq(rcv_pkt,self.sequence):
-            reply_pkt = RDTReceiver.make_reply_pkt('0' if self.sequence=='1' else '1',ord(rcv_pkt['sequence_number'])) #return reply_pkt
-        else:
-            reply_pkt = RDTReceiver.make_reply_pkt(self.sequence,ord(rcv_pkt['sequence_number'])) #return reply_pkt
-            ReceiverProcess.deliver_data(rcv_pkt['data'])
-            self.sequence = '0' if self.sequence=='1' else '1'
-
-        return reply_pkt
+            return RDTReceiver.make_reply_pkt(flipped,ord(flipped)) #return reply_pkt
+        ReceiverProcess.deliver_data(rcv_pkt['data'])
+        self.sequence = flipped
+        return RDTReceiver.make_reply_pkt(self.sequence,ord(rcv_pkt['sequence_number'])) #return reply_pkt
