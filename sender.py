@@ -85,7 +85,6 @@ class RDTSender:
         :return: terminate without returning any value
         """
         # for every character in the buffer
-        # print(process_buffer)
         for data in process_buffer:
             sendAgain=True
             while sendAgain:

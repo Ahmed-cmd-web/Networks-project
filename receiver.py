@@ -54,5 +54,6 @@ class RDTReceiver:
         if self.is_corrupted(rcv_pkt) or not self.is_expected_seq(rcv_pkt,self.sequence):
             return RDTReceiver.make_reply_pkt(flipped,ord(flipped)) #return reply_pkt
         ReceiverProcess.deliver_data(rcv_pkt['data'])
+        pkt= RDTReceiver.make_reply_pkt(self.sequence,ord(rcv_pkt['sequence_number'])) #return reply_pkt
         self.sequence = flipped
-        return RDTReceiver.make_reply_pkt(self.sequence,ord(rcv_pkt['sequence_number'])) #return reply_pkt
+        return pkt
